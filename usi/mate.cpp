@@ -120,6 +120,22 @@ Move mateMoveInOddPlyReturnMove(Position& pos, const int depth) {
 		StateInfo state;
 		pos.doMove(ml.move, state, ci, true);
 
+		// 千日手チェック
+		int isDraw = 0;
+		switch (pos.isDraw(16)) {
+		case NotRepetition: break;
+		case RepetitionDraw:
+		case RepetitionWin:
+		case RepetitionLose:
+		case RepetitionSuperior:
+		case RepetitionInferior:
+		{
+			pos.undoMove(ml.move);
+			continue;
+		}
+		default: UNREACHABLE;
+		}
+
 		//std::cout << ml.move().toUSI() << std::endl;
 		// 偶数手詰めチェック
 		if (mateMoveInEvenPly(pos, depth - 1)) {

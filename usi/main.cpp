@@ -88,7 +88,7 @@ void MySearcher::doUSICommandLoop(int argc, char* argv[]) {
 			<< "\nusiok" << std::endl;
 		else if (token == "isready") { // 対局開始前の準備。
 			// 詰み探索用
-			if (options["Mate_Root_Search"] > 0) {
+			/*if (options["Mate_Root_Search"] > 0) {
 				tt.clear();
 				threads.main()->previousScore = ScoreInfinite;
 				if (!evalTableIsRead) {
@@ -97,7 +97,7 @@ void MySearcher::doUSICommandLoop(int argc, char* argv[]) {
 					std::unique_ptr<Evaluator>(new Evaluator)->init(options["Eval_Dir"]);
 					evalTableIsRead = true;
 				}
-			}
+			}*/
 
 			// 各種初期化
 			set_softmax_tempature(options["Softmax_Tempature"] / 100.0);
@@ -204,51 +204,39 @@ void go_uct(Position& pos, std::istringstream& ssCmd) {
 		return;
 	}
 
+	std::thread *t;
+	Move move2;
+
 	// 詰みの探索用
-	if (pos.searcher()->options["Mate_Root_Search"] > 0) {
-		limits.infinite = true;
-		pos.searcher()->threads.startThinking(pos, limits, pos.searcher()->states);
+	if (!limits.ponder && pos.searcher()->options["Mate_Root_Search"] > 0) {
+		t = new std::thread([&pos, &move2]() {
+			if (!pos.inCheck()) {
+				Position pos_copy(pos);
+				move2 = mateMoveInOddPlyReturnMove(pos_copy, pos.searcher()->options["Mate_Root_Search"]);
+			}
+			else {
+				move2 = Move::moveNone();
+			}
+		});
 	}
 
 	// UCTによる探索
 	Move ponderMove = Move::moveNone();
 	Move move = UctSearchGenmove(&pos, ponderMove, limits.ponder);
 
-	// 詰み探索待ち
-	if (pos.searcher()->options["Mate_Root_Search"] > 0) {
-		pos.searcher()->signals.stop = true;
-		pos.searcher()->threads.main()->waitForSearchFinished();
-	}
-
 	// Ponderの場合、結果を返さない
 	if (limits.ponder)
 		return;
-	
-	if (pos.searcher()->options["Mate_Root_Search"] > 0) {
-		Score score = pos.searcher()->threads.main()->rootMoves[0].score;
 
-		if (score >= ScoreMaxEvaluate) {
+	// 詰み探索待ち
+	if (pos.searcher()->options["Mate_Root_Search"] > 0) {
+		t->join();
+		if (move2 != Move::moveNone()) {
 			// 詰み
-			Move move2 = pos.searcher()->threads.main()->rootMoves[0].pv[0];
-			std::cout << "info score mate ";
-			if (score == ScoreMaxEvaluate)
-				std::cout << "+";
-			else
-				std::cout << ScoreMate0Ply - score;
+			std::cout << "info score mate +" << std::endl;
 			std::cout << " pv " << move2.toUSI() << std::endl;
 			std::cout << "bestmove " << move2.toUSI() << std::endl;
 			return;
-		}
-	}
-	else {
-		if (!pos.inCheck()) {
-			auto m = mateMoveInOddPlyReturnMove(pos, 7);
-			if (m != Move::moveNone()) {
-				std::cout << "info score mate +" << std::endl;
-				std::cout << " pv " << m.toUSI() << std::endl;
-				std::cout << "bestmove " << m.toUSI() << std::endl;
-				return;
-			}
 		}
 	}
 
