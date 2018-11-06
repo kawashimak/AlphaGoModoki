@@ -240,6 +240,17 @@ void go_uct(Position& pos, std::istringstream& ssCmd) {
 			return;
 		}
 	}
+	else {
+		if (!pos.inCheck()) {
+			auto m = mateMoveInOddPlyReturnMove(pos, 7);
+			if (m != Move::moveNone()) {
+				std::cout << "info score mate +" << std::endl;
+				std::cout << " pv " << m.toUSI() << std::endl;
+				std::cout << "bestmove " << m.toUSI() << std::endl;
+				return;
+			}
+		}
+	}
 
 	if (move == Move::moveNone()) {
 		std::cout << "bestmove resign" << std::endl;
