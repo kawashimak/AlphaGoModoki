@@ -103,7 +103,7 @@ void OptionsMap::init(Searcher* s) {
 	(*this)["USI_Hash"] = USIOption(256, 1, MaxHashMB, onHashSize, s);
 #endif // SELF_PLAY
 	(*this)["Clear_Hash"]                  = USIOption(onClearHash, s);
-    (*this)["Book_File"]                   = USIOption("book/20180505/book.bin");
+    (*this)["Book_File"]                   = USIOption("book.bin");
     (*this)["Eval_Dir"]                    = USIOption("20180416");
     (*this)["Best_Book_Move"]              = USIOption(false);
     (*this)["OwnBook"]                     = USIOption(true);
@@ -130,7 +130,7 @@ void OptionsMap::init(Searcher* s) {
 	(*this)["UCT_Threads2"]                = USIOption(0, 0, MaxThreads);
 	(*this)["UCT_Threads3"]                = USIOption(0, 0, MaxThreads);
 	(*this)["UCT_Threads4"]                = USIOption(0, 0, MaxThreads);
-	(*this)["DNN_Model"]                   = USIOption(R"(H:\src\DeepLearningShogi\dlshogi\model_rl_val_wideresnet10_110_1)");
+	(*this)["DNN_Model"]                   = USIOption(R"(model)");
 	(*this)["DNN_Model2"]                  = USIOption("");
 	(*this)["DNN_Model3"]                  = USIOption("");
 	(*this)["DNN_Model4"]                  = USIOption("");
@@ -143,7 +143,7 @@ void OptionsMap::init(Searcher* s) {
 	(*this)["Resign_Threshold"]            = USIOption(10, 0, 1000);
 	(*this)["DebugMessage"]                = USIOption(false);
 #ifdef NDEBUG
-    (*this)["Engine_Name"]                 = USIOption("dlshogi");
+    (*this)["Engine_Name"]                 = USIOption("AlphaGoModoki");
 #else
     (*this)["Engine_Name"]                 = USIOption("dlshogi Debug Build");
 #endif
