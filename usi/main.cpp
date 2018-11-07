@@ -204,12 +204,12 @@ void go_uct(Position& pos, std::istringstream& ssCmd) {
 		return;
 	}
 
-	std::thread *t;
+	std::unique_ptr<std::thread> t;
 	Move move2;
 
 	// 詰みの探索用
 	if (!limits.ponder && pos.searcher()->options["Mate_Root_Search"] > 0) {
-		t = new std::thread([&pos, &move2]() {
+		t.reset(new std::thread([&pos, &move2]() {
 			if (!pos.inCheck()) {
 				Position pos_copy(pos);
 				move2 = mateMoveInOddPlyReturnMove(pos_copy, pos.searcher()->options["Mate_Root_Search"]);
@@ -217,7 +217,7 @@ void go_uct(Position& pos, std::istringstream& ssCmd) {
 			else {
 				move2 = Move::moveNone();
 			}
-		});
+		}));
 	}
 
 	// UCTによる探索
