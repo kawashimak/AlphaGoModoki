@@ -11,7 +11,7 @@
 #include "cppshogi.h"
 #include "UctSearch.h"
 #include "Message.h"
-#include "mate.h"
+#include "dfpn.h"
 
 extern std::ostream& operator << (std::ostream& os, const OptionsMap& om);
 
@@ -30,6 +30,7 @@ int main(int argc, char* argv[]) {
 	//HuffmanCodedPos::init();
 	auto s = std::unique_ptr<MySearcher>(new MySearcher);
 
+	dfpn_init();
 	InitializeUctSearch();
 
 	s->init();
@@ -88,16 +89,17 @@ void MySearcher::doUSICommandLoop(int argc, char* argv[]) {
 			<< "\nusiok" << std::endl;
 		else if (token == "isready") { // 対局開始前の準備。
 			// 詰み探索用
-			/*if (options["Mate_Root_Search"] > 0) {
-				tt.clear();
+			if (options["Mate_Root_Search"] > 0) {
+				/*tt.clear();
 				threads.main()->previousScore = ScoreInfinite;
 				if (!evalTableIsRead) {
 					// 一時オブジェクトを生成して Evaluator::init() を呼んだ直後にオブジェクトを破棄する。
 					// 評価関数の次元下げをしたデータを格納する分のメモリが無駄な為、
 					std::unique_ptr<Evaluator>(new Evaluator)->init(options["Eval_Dir"]);
 					evalTableIsRead = true;
-				}
-			}*/
+				}*/
+				dfpn_set_maxdepth(options["Mate_Root_Search"]);
+			}
 
 			// 各種初期化
 			set_softmax_tempature(options["Softmax_Tempature"] / 100.0);
@@ -205,17 +207,14 @@ void go_uct(Position& pos, std::istringstream& ssCmd) {
 	}
 
 	std::unique_ptr<std::thread> t;
-	Move move2;
+	bool mate = false;
 
 	// 詰みの探索用
 	if (!limits.ponder && pos.searcher()->options["Mate_Root_Search"] > 0) {
-		t.reset(new std::thread([&pos, &move2]() {
+		t.reset(new std::thread([&pos, &mate]() {
 			if (!pos.inCheck()) {
 				Position pos_copy(pos);
-				move2 = mateMoveInOddPlyReturnMove(pos_copy, pos.searcher()->options["Mate_Root_Search"]);
-			}
-			else {
-				move2 = Move::moveNone();
+				mate = dfpn(pos_copy);
 			}
 		}));
 	}
@@ -230,11 +229,14 @@ void go_uct(Position& pos, std::istringstream& ssCmd) {
 
 	// 詰み探索待ち
 	if (pos.searcher()->options["Mate_Root_Search"] > 0) {
+		dfpn_stop();
 		t->join();
-		if (move2 != Move::moveNone()) {
+		if (mate) {
 			// 詰み
-			std::cout << "info score mate +" << std::endl;
-			std::cout << " pv " << move2.toUSI() << std::endl;
+			Move move2 = dfpn_move(pos);
+			// PV表示
+			std::cout << "info score mate + pv " << move2.toUSI();
+			std::cout << std::endl;
 			std::cout << "bestmove " << move2.toUSI() << std::endl;
 			return;
 		}
@@ -490,7 +492,7 @@ void make_book(std::istringstream& ssCmd) {
 }
 
 void mate_test(Position& pos, std::istringstream& ssCmd) {
-	auto start = std::chrono::system_clock::now();
+/*	auto start = std::chrono::system_clock::now();
 	bool isCheck;
 	int depth;
 	ssCmd >> depth;
@@ -509,7 +511,7 @@ void mate_test(Position& pos, std::istringstream& ssCmd) {
 	auto msec = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
 
 	std::cout << "mateMoveIn" << depth << "Ply : " << isCheck << std::endl;
-	std::cout << msec << " msec" << std::endl;
+	std::cout << msec << " msec" << std::endl;*/
 }
 
 void test(Position& pos, std::istringstream& ssCmd) {
