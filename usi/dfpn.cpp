@@ -774,12 +774,17 @@ void DFPNwithTCA(Position& n, int thpn, int thdn/*, bool inc_flag*/, uint16_t de
 
 					n.doMove(m, si, ci, true);
 
+					auto& entry2 = transposition_table.LookUp<false>(n, depth + 1);
+
 					// ‚±‚Ì‹Ç–Ê‚Å‚·‚×‚Ä‚Ìevasion‚ðŽŽ‚·
 					MovePicker<false> move_picker2(n);
 
 					if (move_picker2.size() == 0) {
 						// 1Žè‚Å‹l‚ñ‚¾
 						n.undoMove(m);
+
+						entry2.pn = 0;
+						entry2.dn = kInfinitePnDn;
 
 						entry.pn = 0;
 						entry.dn = kInfinitePnDn;
@@ -800,7 +805,6 @@ void DFPNwithTCA(Position& n, int thpn, int thdn/*, bool inc_flag*/, uint16_t de
 					}
 
 					const CheckInfo ci2(n);
-					auto& entry2 = transposition_table.LookUp<false>(n, depth + 1);
 					for (const auto& move : move_picker2)
 					{
 						const Move& m2 = move.move;
