@@ -64,7 +64,7 @@ void MySearcher::doUSICommandLoop(int argc, char* argv[]) {
 			GameOver();
 		}
 		else if (token == "stop") {
-			StopPondering();
+			StopUctSearch();
 			if (th.joinable())
 				th.join();
 			// 無視されるがbestmoveを返す
@@ -72,7 +72,7 @@ void MySearcher::doUSICommandLoop(int argc, char* argv[]) {
 		}
 		else if (token == "ponderhit" || token == "go") {
 			if (token == "ponderhit") {
-				StopPondering();
+				StopUctSearch();
 			}
 			if (th.joinable())
 				th.join();
@@ -215,6 +215,8 @@ void go_uct(Position& pos, std::istringstream& ssCmd) {
 			if (!pos.inCheck()) {
 				Position pos_copy(pos);
 				mate = dfpn(pos_copy);
+				if (mate)
+					StopUctSearch();
 			}
 		}));
 	}
