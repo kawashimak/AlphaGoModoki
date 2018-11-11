@@ -426,6 +426,7 @@ void
 SetIncTime(double time, Color c)
 {
 	inc_time[c] = time;
+	uct_search_stop = false;
 }
 
 //////////////////////////
@@ -549,7 +550,6 @@ UctSearchGenmove(Position *pos, Move &ponderMove, bool ponder)
 	pos_root = pos;
 
 	pondering = ponder;
-	uct_search_stop = false;
 
 	// 探索情報をクリア
 	po_info.count = 0;
